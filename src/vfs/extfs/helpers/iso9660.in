@@ -31,7 +31,7 @@
 
 #*** file scope functions **********************************************
 
-XORRISO=$(which --skip-alias --skip-functions xorriso 2>/dev/null)
+XORRISO=$(which xorriso 2>/dev/null)
 
 xorriso_list() {
     if test -z "$XORRISO"; then
