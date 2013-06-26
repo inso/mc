@@ -1,13 +1,92 @@
 #! /bin/sh
-
-# ISO9660 VFS for MC by Michael Shigorin <mike@altlinux.org>,
-#   modifications by Grigory Milev <week@altlinux.org>
-#   and Kachalov Anton <mouse@linux.ru.net>   April 2003
+# Midnight Commander - ISO9660 VFS for MC
 # based on lslR by Tomas Novak <tnovak@ipex.cz>   April 2000
-# -- look there for additional parsing comments if needed
+#
+# Copyright (C) 2000, 2003
+# The Free Software Foundation, Inc.
+#
+# Written by:
+#  Michael Shigorin <mike@altlinux.org>,
+#  Grigory Milev <week@altlinux.org>,
+#  Kachalov Anton <mouse@linux.ru.net>, 2003
+#  Victor Ananjevsky <ananasik@gmail.com>, 2013
+#  slava zanko <slavazanko@gmail.com>, 2013
+#
+# This file is part of the Midnight Commander.
+#
+# The Midnight Commander is free software: you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# The Midnight Commander is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+#*** include section (source functions, for example) *******************
+
+#*** file scope functions **********************************************
+
+XORRISO=$(which --skip-alias --skip-functions xorriso 2>/dev/null)
+
+xorriso_list() {
+    if test -z "$XORRISO"; then
+        return 1
+    fi
+    local dir attr ln usr gr sz dt1 dt2 dt3 nm len name
+    dir="$2"
+    $XORRISO -dev stdio:"$1" -cd "$dir" -lsl 2> /dev/null | grep "^[-d]" | \
+    while read attr ln usr gr sz dt1 dt2 dt3 nm ; do
+        len=$((${#nm} - 2))
+        name=$(printf "$nm" | cut -c2-$len)  # remove quotes
+        if test $(printf "$nm" | cut -c1-2) != "d"; then
+            printf "%s %s %s %s %s %s %s %s %s/%s\n" "$attr" "$ln" "$usr" "$gr" "$sz" "$dt1" "$dt2" "$dt3" "$dir" "$name"
+        else
+            xorriso_list "$1" "$dir/$name"
+        fi
+    done
+}
+
+xorriso_copyout() {
+    if test -z "$XORRISO"; then
+        return 1
+    fi
+    $XORRISO -dev stdio:"$1" -osirrox on -extract "$2" "$3" >/dev/null 2>&1
+}
+
+xorriso_copyin() {
+    if test -z "$XORRISO"; then
+        return 1
+    fi
+    $XORRISO -dev stdio:"$1" -cpr "$3" "$2" >/dev/null 2>&1
+}
+
+xorriso_mkdir() {
+    if test -z "$XORRISO"; then
+        return 1
+    fi
+    $XORRISO -dev stdio:"$1" -mkdir "$2" >/dev/null 2>&1
+}
+
+xorriso_rmdir() {
+    if test -z "$XORRISO"; then
+        return 1
+    fi
+    $XORRISO -dev stdio:"$1" -rmdir "$2" >/dev/null 2>&1
+}
+
+xorriso_rm() {
+    if test -z "$XORRISO"; then
+        return 1
+    fi
+    $XORRISO -dev stdio:"$1" -rm "$2" >/dev/null 2>&1
+}
 
 # tested to comply with isoinfo 2.0's output
-
 test_iso () {
     CHARSET=`locale charmap 2>/dev/null`
     if test -z "$CHARSET"; then
@@ -74,7 +153,7 @@ BEGIN {
   # skip . and ..
   if (name ~ /^\.\.?/) next;
   printf "%s%s%s\n", attr, dir, name
-}' 
+}'
 }
 
 mcisofs_copyout () {
@@ -85,6 +164,8 @@ mcisofs_copyout () {
         fi
 }
 
+#*** main code *********************************************************
+
 LC_ALL=C
 
 cmd="$1"
@@ -92,12 +173,42 @@ shift
 
 case "$cmd" in
   list)
-    test_iso "$@";
-    mcisofs_list "$@";
-    exit 0;;
+    xorriso_list "$@" || {
+        test_iso "$@";
+        mcisofs_list "$@";
+    }
+    exit 0
+    ;;
+  rm)
+    xorriso_rm "$@" || {
+        exit 1
+    }
+    exit 0
+    ;;
+  rmdir)
+    xorriso_rmdir "$@" || {
+        exit 1
+    }
+    exit 0
+    ;;
+  mkdir)
+    xorriso_mkdir "$@" || {
+        exit 1
+    }
+    exit 0
+    ;;
+  copyin)
+    xorriso_copyin "$@" || {
+        exit 1
+    }
+    exit 0
+    ;;
   copyout)
-    test_iso "$@";
-    mcisofs_copyout "$@";
-    exit 0;;
+    xorriso_copyout "$@" || {
+        test_iso "$@";
+        mcisofs_copyout "$@";
+    }
+    exit 0
+    ;;
 esac
 exit 1
