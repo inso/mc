@@ -88,44 +88,44 @@ xorriso_rm() {
 
 # tested to comply with isoinfo 2.0's output
 test_iso () {
-    CHARSET=`locale charmap 2>/dev/null`
+    CHARSET=$(locale charmap 2>/dev/null)
     if test -z "$CHARSET"; then
-	CHARSET=`locale 2>/dev/null | @GREP@ LC_CTYPE | sed -n -e 's/.*\.\(.*\)"$/\1/p'`
+        CHARSET=$(locale 2>/dev/null | @GREP@ LC_CTYPE | sed -n -e 's/.*\.\(.*\)"$/\1/p')
     fi
     if test -n "$CHARSET"; then
-	CHARSET=`echo "$CHARSET" | tr '[A-Z]' '[a-z]' | sed -e 's/^iso-/iso/'`
-	isoinfo -j $CHARSET -i /dev/null 2>&1 | @GREP@ "Iconv not yet supported\|Unknown charset" >/dev/null && CHARSET=
+        CHARSET=$(echo "$CHARSET" | tr '[A-Z]' '[a-z]' | sed -e 's/^iso-/iso/')
+        isoinfo -j $CHARSET -i /dev/null 2>&1 | @GREP@ "Iconv not yet supported\|Unknown charset" >/dev/null && CHARSET=
     fi
     if test -n "$CHARSET"; then
-	JOLIET_OPT="-j $CHARSET -J"
+        JOLIET_OPT="-j $CHARSET -J"
     else
-	JOLIET_OPT="-J"
+        JOLIET_OPT="-J"
     fi
     ISOINFO="isoinfo -R"
 
-    ISOINFO_D_I="`isoinfo -d -i "$1" 2>/dev/null`"
+    ISOINFO_D_I="$(isoinfo -d -i "$1" 2>/dev/null)"
 
     echo "$ISOINFO_D_I" | @GREP@ "UCS level 1\|NO Joliet" > /dev/null || ISOINFO="$ISOINFO $JOLIET_OPT"
 
-    if [ `echo "$ISOINFO_D_I" | @GREP@ "Joliet with UCS level 3 found" | wc -l` = 1 \
-        -a `echo "$ISOINFO_D_I" | @GREP@ "NO Rock Ridge" | wc -l` = 1 ] ; then
+    if [ $(echo "$ISOINFO_D_I" | @GREP@ "Joliet with UCS level 3 found" | wc -l) = 1 \
+        -a $(echo "$ISOINFO_D_I" | @GREP@ "NO Rock Ridge" | wc -l) = 1 ] ; then
         SEMICOLON="YES"
     fi
 }
 
 mcisofs_list () {
-# left as a reminder to implement compressed image support =)
-case "$1" in
-  *.lzma) MYCAT="lzma -dc";;
-  *.xz)  MYCAT="xz -dc";;
-  *.bz2) MYCAT="bzip2 -dc";;
-  *.gz)  MYCAT="gzip -dc";;
-  *.z)   MYCAT="gzip -dc";;
-  *.Z)   MYCAT="gzip -dc";;
-  *)     MYCAT="cat";;
-esac
+    # left as a reminder to implement compressed image support =)
+    case "$1" in
+      *.lzma) MYCAT="lzma -dc";;
+      *.xz)  MYCAT="xz -dc";;
+      *.bz2) MYCAT="bzip2 -dc";;
+      *.gz)  MYCAT="gzip -dc";;
+      *.z)   MYCAT="gzip -dc";;
+      *.Z)   MYCAT="gzip -dc";;
+      *)     MYCAT="cat";;
+    esac
 
-$ISOINFO -l -i "$1" 2>/dev/null | @AWK@ -v SEMICOLON=$SEMICOLON '
+    $ISOINFO -l -i "$1" 2>/dev/null | @AWK@ -v SEMICOLON=$SEMICOLON '
 BEGIN {
   dir="";
   # Pattern to match 8 first fields.
@@ -157,11 +157,11 @@ BEGIN {
 }
 
 mcisofs_copyout () {
-        if [ "x$SEMICOLON" = "xYES" ]; then
-            $ISOINFO -i "$1" -x "/$2;1" 2>/dev/null > "$3"
-        else
-            $ISOINFO -i "$1" -x "/$2" 2>/dev/null > "$3"
-        fi
+    if [ "x$SEMICOLON" = "xYES" ]; then
+        $ISOINFO -i "$1" -x "/$2;1" 2>/dev/null > "$3"
+    else
+        $ISOINFO -i "$1" -x "/$2" 2>/dev/null > "$3"
+    fi
 }
 
 #*** main code *********************************************************
