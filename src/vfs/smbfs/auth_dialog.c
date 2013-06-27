@@ -61,6 +61,7 @@ smbfs_auth_dialog (const char *server, const char *share,
         quick_widget_t quick_widgets[] = {
             /* *INDENT-OFF* */
             QUICK_LABEL (smb_path, NULL),
+            QUICK_SEPARATOR (TRUE),
             QUICK_LABELED_INPUT (N_("Workgroup:"), input_label_above,
                                  *workgroup, "input-3", &new_workgroup, NULL, FALSE, FALSE, INPUT_COMPLETE_NONE),
             QUICK_LABELED_INPUT (N_("User name:"), input_label_above,
@@ -74,7 +75,7 @@ smbfs_auth_dialog (const char *server, const char *share,
 
         quick_dialog_t qdlg = {
             -1, -1, 64,
-            N_("Enter Samba credentials"), "[Samba credentials]",
+            N_("Samba credentials"), "[Samba credentials]",
             quick_widgets, NULL, NULL
         };
 
