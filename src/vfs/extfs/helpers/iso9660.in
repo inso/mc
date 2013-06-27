@@ -39,7 +39,7 @@ xorriso_list() {
     fi
     local dir attr ln usr gr sz dt1 dt2 dt3 nm len name
     dir="$2"
-    $XORRISO -dev stdio:"$1" -cd "$dir" -lsl 2> /dev/null | grep "^[-d]" | \
+    $XORRISO -dev stdio:"$1" -cd "$dir" -lsl 2> /dev/null | @GREP@ "^[-d]" | \
     while read attr ln usr gr sz dt1 dt2 dt3 nm ; do
         len=$((${#nm} - 2))
         name=$(printf "$nm" | cut -c2-$len)  # remove quotes
